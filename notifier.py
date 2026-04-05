@@ -25,7 +25,7 @@ def _format_message(tasks: list[Task], mention_id: Optional[str] = None) -> str:
     now = datetime.now(tz=timezone.utc)
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
 
-    header = "**期限に関する通知があります**\n"
+    header = "**タスクをお知らせします！**\n"
     if mention_id:
         header = f"<@{mention_id}> " + header
 
@@ -34,7 +34,6 @@ def _format_message(tasks: list[Task], mention_id: Optional[str] = None) -> str:
         due_str = (
             task.due_date.strftime("%Y-%m-%d") if task.due_date else "未設定"
         )
-        assignee_str = task.assignee if task.assignee else "未設定"
 
         if task.due_date:
             days_diff = (task.due_date - today_start).days
@@ -48,10 +47,20 @@ def _format_message(tasks: list[Task], mention_id: Optional[str] = None) -> str:
         else:
             title_prefix = ""
 
+        info_parts = [f"締切: {due_str}"]
+        if task.additional_label:
+            val = task.additional_value.strip() if task.additional_value else ""
+            if not val or val == "[]" or val == "None":
+                val = "なし"
+            info_parts.append(f"{task.additional_label}: {val}")
+        
+        info_line = "  |  ".join(info_parts)
+
+        title_disp = f"{title_prefix} {task.title}".strip()
         lines.append(
-            f"- **{title_prefix} {task.title}**\n"
-            f"  締切: {due_str} | 担当: {assignee_str}\n"
-            f"  {task.url}"
+            f"**{title_disp}**\n"
+            f"{info_line}\n"
+            f"[ページリンク](<{task.url}>)\n"
         )
     return "\n".join(lines)
 

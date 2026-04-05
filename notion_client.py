@@ -38,7 +38,8 @@ class Task:
         due_date: Optional[datetime],
         status: str,
         url: str,
-        assignee: Optional[str],
+        additional_label: str = "",
+        additional_value: str = "",
     ) -> None:
         self.workspace = workspace
         self.page_id = page_id
@@ -46,7 +47,8 @@ class Task:
         self.due_date = due_date
         self.status = status
         self.url = url
-        self.assignee = assignee
+        self.additional_label = additional_label
+        self.additional_value = additional_value
 
     def __repr__(self) -> str:
         return (
@@ -128,25 +130,65 @@ def _extract_status(properties: dict, status_property: str) -> str:
     return ""
 
 
-def _extract_assignee(properties: dict) -> Optional[str]:
-    """ページプロパティから担当者名を抽出する。
+_RELATION_CACHE = {}
 
-    "Assignee" または "担当者" という名前のプロパティを優先的に探す。
+def _extract_additional(properties: dict, prop_name: str, token: str = "") -> str:
+    """指定プロパティの値を文字列として抽出する（汎用）。"""
+    prop = properties.get(prop_name)
+    if not prop:
+        return ""
+    prop_type = prop.get("type", "")
+    if prop_type == "select":
+        val = prop.get("select")
+        return val.get("name", "") if val else ""
+    if prop_type == "multi_select":
+        return ", ".join(item.get("name", "") for item in prop.get("multi_select", []))
+    if prop_type == "rich_text":
+        return "".join(rt.get("plain_text", "") for rt in prop.get("rich_text", []))
+    if prop_type == "status":
+        val = prop.get("status")
+        return val.get("name", "") if val else ""
+    if prop_type == "title":
+        rich_texts = prop.get("title", [])
+        return "".join(rt.get("plain_text", "") for rt in rich_texts)
+    if prop_type == "relation" and token:
+        val = prop.get("relation", [])
+        names = []
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "Notion-Version": "2022-06-28",
+        }
+        for item in val:
+            page_id = item.get("id")
+            if not page_id:
+                continue
+            if page_id in _RELATION_CACHE:
+                names.append(_RELATION_CACHE[page_id])
+                continue
+            try:
+                url = f"https://api.notion.com/v1/pages/{page_id}"
+                resp = requests.get(url, headers=headers, timeout=10)
+                if resp.status_code == 200:
+                    p_props = resp.json().get("properties", {})
+                    for k, v in p_props.items():
+                        if v.get("type") == "title":
+                            rta = v.get("title", [])
+                            title_str = "".join(rt.get("plain_text", "") for rt in rta)
+                            _RELATION_CACHE[page_id] = title_str
+                            names.append(title_str)
+                            break
+            except Exception:
+                pass
+        return ", ".join(names)
+    if prop_type == "formula":
+        val = prop.get("formula", {})
+        f_type = val.get("type", "")
+        return str(val.get(f_type, "")) if f_type else ""
 
-    Args:
-        properties: Notion ページのプロパティ辞書。
+    # デフォルト
+    val = prop.get(prop_type)
+    return str(val) if val is not None else ""
 
-    Returns:
-        担当者名文字列。担当者未設定の場合は None。
-    """
-    for key in ("Assignee", "担当者", "assignee"):
-        prop = properties.get(key)
-        if not prop:
-            continue
-        people = prop.get("people", [])
-        if people:
-            return people[0].get("name")
-    return None
 
 
 def fetch_tasks(workspace_config: dict) -> list[Task]:
@@ -168,6 +210,7 @@ def fetch_tasks(workspace_config: dict) -> list[Task]:
     database_id: str = workspace_config["database_id"]
     date_property: str = workspace_config["date_property"]
     status_property: str = workspace_config["status_property"]
+    additional_property: Optional[str] = workspace_config.get("additional_property")
 
     headers = {
         "Authorization": f"Bearer {token}",
@@ -198,7 +241,8 @@ def fetch_tasks(workspace_config: dict) -> list[Task]:
                 due_date=_extract_date(properties, date_property),
                 status=_extract_status(properties, status_property),
                 url=page.get("url", ""),
-                assignee=_extract_assignee(properties),
+                additional_label=additional_property or "",
+                additional_value=_extract_additional(properties, additional_property, token) if additional_property else "",
             )
             tasks.append(task)
 
