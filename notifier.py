@@ -36,7 +36,14 @@ def _format_message(tasks: list[Task], mention_id: Optional[str] = None) -> str:
         header = f"<@{mention_id}> " + header
 
     lines: list[str] = [header]
-    for task in tasks:
+    
+    # 日付順（期限が近いものから）にソート。期限未設定(None)は最後に。
+    sorted_tasks = sorted(
+        tasks,
+        key=lambda t: t.due_date if t.due_date else datetime.max.replace(tzinfo=timezone.utc)
+    )
+
+    for task in sorted_tasks:
         due_str = (
             task.due_date.strftime("%Y-%m-%d") if task.due_date else "未設定"
         )

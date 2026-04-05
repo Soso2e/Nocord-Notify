@@ -15,6 +15,7 @@ from __future__ import annotations
 import json
 import logging
 import sys
+import concurrent.futures
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -123,9 +124,13 @@ def main() -> None:
 
     today_str = datetime.now(tz=timezone.utc).strftime("%Y-%m-%d")
 
-    # ステップ 3〜8: 各ワークスペースを処理
-    for workspace_config in config:
-        _process_workspace(workspace_config, today_str)
+    # ステップ 3〜8: 各ワークスペースを並列処理
+    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+        futures = [
+            executor.submit(_process_workspace, workspace_config, today_str)
+            for workspace_config in config
+        ]
+        concurrent.futures.wait(futures)
 
     logger.info("全処理完了")
 
