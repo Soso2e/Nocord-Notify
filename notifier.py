@@ -45,7 +45,7 @@ def _format_message(tasks: list[Task], mention_id: Optional[str] = None) -> str:
             days_diff = (task.due_date - today_start).days
             if days_diff < 0:
                 overdue_days = abs(days_diff)
-                title_prefix = f"【{overdue_days}日超過: ステータスを更新して下さい】"
+                title_prefix = f"【{overdue_days}日超過: 更新して下さい】\n"
             elif days_diff == 0:
                 title_prefix = "【本日締切】"
             else:
