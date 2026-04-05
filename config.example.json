@@ -1,0 +1,24 @@
+[
+  {
+    "name": "workspace_a",
+    "notion_token": "secret_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "database_id": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "date_property": "End date",
+    "status_property": "Status",
+    "done_values": ["完了", "Done"],
+    "notify_within_days": 7,
+    "discord_webhook_url": "https://discord.com/api/webhooks/xxxxxxxxxx/xxxxxxxxxx",
+    "discord_mention_id": "123456789012345678"
+  },
+  {
+    "name": "workspace_b",
+    "notion_token": "secret_yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy",
+    "database_id": "yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy",
+    "date_property": "Due",
+    "status_property": "進捗",
+    "done_values": ["完了"],
+    "notify_within_days": 7,
+    "discord_webhook_url": "https://discord.com/api/webhooks/yyyyyyyyyy/yyyyyyyyyy",
+    "discord_mention_id": "098765432109876543"
+  }
+]
