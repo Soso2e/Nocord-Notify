@@ -6,7 +6,7 @@ concept.md §8 の通知フォーマットでメッセージを生成し、Disco
 from __future__ import annotations
 
 import requests
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import Optional
 
 from notion_client import Task
@@ -25,7 +25,13 @@ def _format_message(tasks: list[Task], mention_id: Optional[str] = None) -> str:
     now = datetime.now(tz=timezone.utc)
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
 
-    header = "**タスクをお知らせします！**\n"
+    jst = timezone(timedelta(hours=9))
+    now_jst = now.astimezone(jst)
+    weekdays_ja = ("月", "火", "水", "木", "金", "土", "日")
+    wd_str = weekdays_ja[now_jst.weekday()]
+    date_str = f"{now_jst.month}/{now_jst.day}"
+
+    header = f"**{date_str} ({wd_str})・タスクをお知らせします！**\n"
     if mention_id:
         header = f"<@{mention_id}> " + header
 
@@ -60,7 +66,7 @@ def _format_message(tasks: list[Task], mention_id: Optional[str] = None) -> str:
         lines.append(
             f"**{title_disp}**\n"
             f"{info_line}\n"
-            f"[ページリンク](<{task.url}>)\n"
+            f"[ページへ](<{task.url}>)\n"
         )
     return "\n".join(lines)
 
