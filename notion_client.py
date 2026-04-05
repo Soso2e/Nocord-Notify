@@ -123,6 +123,8 @@ def _extract_status(properties: dict, status_property: str) -> str:
     if prop_type == "rich_text":
         rich_texts = prop.get("rich_text", [])
         return "".join(rt.get("plain_text", "") for rt in rich_texts)
+    if prop_type == "checkbox":
+        return str(prop.get("checkbox", False))
     return ""
 
 
