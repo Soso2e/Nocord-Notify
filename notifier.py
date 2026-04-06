@@ -33,7 +33,7 @@ def _format_message(tasks: list[Task], mention_id: Optional[str] = None) -> str:
 
     header = f"**{date_str} ({wd_str})・タスクをお知らせします！**\n"
     if mention_id:
-        header = f"<@{mention_id}> " + header
+        header = f"<@{mention_id}>\n" + header
 
     lines: list[str] = [header]
     
